@@ -9,4 +9,4 @@ A simple discount calculator application to help users compute discounted prices
 ## How to Use
 1. Clone the repository.
 2. Open `index.html` in your web browser.
-3.
+
