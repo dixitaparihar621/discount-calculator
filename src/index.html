@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shopping Discount Calculator</title>
+<style>
+:root{--bg:#f4f1ff;--card:#fff;--text:#1d1b2e;--muted:#6b6880;--accent:#6c4cf1;--accent2:#ff6b9a;--ok:#12a36b;--line:#e6e2f5;--code:#1e1b33;--codetext:#d9d4ff}
+@media(prefers-color-scheme:dark){:root{--bg:#14121f;--card:#1e1b2e;--text:#f0eefc;--muted:#a09bbb;--line:#33304a;--code:#0f0d18}}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);background:var(--bg);padding:24px 14px;overflow-x:hidden}
+body::before,body::after{content:"";position:fixed;width:340px;height:340px;border-radius:50%;filter:blur(80px);opacity:.35;z-index:-1;animation:float 12s ease-in-out infinite}
+body::before{background:var(--accent);top:-80px;left:-80px}
+body::after{background:var(--accent2);bottom:-80px;right:-80px;animation-delay:-6s}
+@keyframes float{50%{transform:translate(40px,30px) scale(1.15)}}
+@keyframes rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+.wrap{max-width:900px;margin:0 auto;animation:rise .7s cubic-bezier(.2,.8,.2,1) both}
+h1{text-align:center;margin:0 0 4px;font-size:clamp(1.6rem,4vw,2.3rem)}
+h1 span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{text-align:center;color:var(--muted);margin:0 0 24px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:720px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 10px 30px rgba(80,60,160,.10);transition:transform .3s,box-shadow .3s}
+.card:hover{transform:translateY(-3px);box-shadow:0 16px 36px rgba(80,60,160,.18)}
+.field{position:relative;margin-bottom:16px}
+.field label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:6px;font-weight:600}
+.field input{width:100%;padding:13px 14px;font-size:1rem;color:var(--text);background:transparent;border:2px solid var(--line);border-radius:12px;outline:none;transition:border-color .25s,box-shadow .25s}
+.field input:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(108,76,241,.18)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:-4px 0 16px}
+.chip{border:1px solid var(--line);background:transparent;color:var(--text);padding:7px 13px;border-radius:99px;cursor:pointer;font-size:.85rem;transition:all .2s}
+.chip:hover{background:var(--accent);color:#fff;transform:translateY(-2px)}
+.chip:active{transform:scale(.94)}
+button.reset{width:100%;padding:12px;border:0;border-radius:12px;color:#fff;font-weight:700;font-size:1rem;cursor:pointer;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:transform .2s,filter .2s}
+button.reset:hover{filter:brightness(1.08);transform:translateY(-2px)}
+button.reset:active{transform:scale(.97)}
+.line{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px dashed var(--line);font-size:.95rem}
+.line b{font-variant-numeric:tabular-nums;transition:color .3s}
+.neg{color:var(--ok)}
+.total{margin:16px 0 10px;padding:18px;border-radius:16px;text-align:center;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2));background-size:200% 200%;animation:shift 6s ease infinite}
+@keyframes shift{50%{background-position:100% 50%}}
+.total small{opacity:.85;display:block}
+.total strong{font-size:2.2rem;font-variant-numeric:tabular-nums}
+.save{text-align:center;color:var(--ok);font-weight:700;min-height:1.4em}
+.bar{height:10px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:10px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ok),#7be0b0);border-radius:99px;transition:width .7s cubic-bezier(.2,.8,.2,1)}
+.pop{animation:pop .35s ease}
+@keyframes pop{50%{transform:scale(1.06)}}
+.engine{margin-top:18px}
+.engine summary{cursor:pointer;font-weight:700;list-style:none}
+.engine summary::before{content:"▸ ";display:inline-block;transition:transform .3s}
+.engine[open] summary::before{transform:rotate(90deg)}
+pre{background:var(--code);color:var(--codetext);padding:16px;border-radius:12px;overflow-x:auto;font-size:.8rem;line-height:1.5;margin:12px 0 0}
+.note{font-size:.8rem;color:var(--muted);margin:10px 0 0}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🛍️ Shopping <span>Discount Calculator</span></h1>
+  <p class="sub">Enter your price and offers — see what you really pay.</p>
+
+  <div class="grid">
+    <div class="card">
+      <div class="row">
+        <div class="field"><label for="price">Price per item (₹)</label><input id="price" type="number" min="0" step="any" value="2499" inputmode="decimal"></div>
+        <div class="field"><label for="qty">Quantity</label><input id="qty" type="number" min="1" step="1" value="1" inputmode="numeric"></div>
+      </div>
+      <div class="field"><label for="disc">Discount (%)</label><input id="disc" type="number" min="0" max="100" step="any" value="20" inputmode="decimal"></div>
+      <div class="chips" id="chips"><button class="chip" data-v="10">10%</button><button class="chip" data-v="20">20%</button><button class="chip" data-v="30">30%</button><button class="chip" data-v="50">50%</button><button class="chip" data-v="70">70%</button></div>
+      <div class="row">
+        <div class="field"><label for="coupon">Extra coupon (%)</label><input id="coupon" type="number" min="0" max="100" step="any" value="5" inputmode="decimal"></div>
+        <div class="field"><label for="tax">Tax / GST (%)</label><input id="tax" type="number" min="0" max="100" step="any" value="18" inputmode="decimal"></div>
+      </div>
+      <button class="reset" id="reset">Reset</button>
+    </div>
+
+    <div class="card">
+      <div class="line"><span>Subtotal</span><b id="r-sub">₹0.00</b></div>
+      <div class="line"><span>Discount</span><b id="r-disc" class="neg">−₹0.00</b></div>
+      <div class="line"><span>Coupon</span><b id="r-coupon" class="neg">−₹0.00</b></div>
+      <div class="line"><span>Tax</span><b id="r-tax">₹0.00</b></div>
+      <div class="total" id="totalBox"><small>You pay</small><strong id="r-total">₹0.00</strong></div>
+      <div class="save" id="save"></div>
+      <div class="bar"><i id="bar"></i></div>
+    </div>
+  </div>
+
+  <details class="card engine">
+    <summary>View the C calculation engine</summary>
+<pre id="csrc">#include &lt;stdio.h&gt;
+
+int main() {
+    float price, discount, coupon, tax;
+    float subtotal, discountAmt, afterDiscount;
+    float couponAmt, afterCoupon, taxAmt, total, saved;
+    int qty;
+
+    printf("Enter price of one item: ");
+    scanf("%f", &amp;price);
+    printf("Enter quantity: ");
+    scanf("%d", &amp;qty);
+    printf("Enter discount percent: ");
+    scanf("%f", &amp;discount);
+    printf("Enter coupon percent: ");
+    scanf("%f", &amp;coupon);
+    printf("Enter tax percent: ");
+    scanf("%f", &amp;tax);
+
+    subtotal      = price * qty;
+    discountAmt   = subtotal * discount / 100;
+    afterDiscount = subtotal - discountAmt;
+
+    couponAmt     = afterDiscount * coupon / 100;
+    afterCoupon   = afterDiscount - couponAmt;
+
+    taxAmt        = afterCoupon * tax / 100;
+    total         = afterCoupon + taxAmt;
+    saved         = discountAmt + couponAmt;
+
+    printf("\nSubtotal : %.2f\n", subtotal);
+    printf("Discount : %.2f\n", discountAmt);
+    printf("Coupon   : %.2f\n", couponAmt);
+    printf("Tax      : %.2f\n", taxAmt);
+    printf("You pay  : %.2f\n", total);
+    printf("You save : %.2f\n", saved);
+
+    return 0;
+}</pre>
+    <p class="note">Browsers cannot run C directly, so the page runs the same steps as the C program above. Save it as <code>discount.c</code>, then run <code>gcc discount.c -o discount</code> and <code>./discount</code> in a terminal.</p>
+  </details>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const ids = ["price","qty","disc","coupon","tax"];
+const defaults = {price:2499, qty:1, disc:20, coupon:5, tax:18};
+const fmt = n => "₹" + n.toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+const shown = {};
+
+// Mirrors the simple C program shown on the page
+function calculate(price, qty, discount, coupon, tax){
+  const subtotal = price * qty;
+  const discountAmt = subtotal * discount / 100;
+  const afterDiscount = subtotal - discountAmt;
+  const couponAmt = afterDiscount * coupon / 100;
+  const afterCoupon = afterDiscount - couponAmt;
+  const taxAmt = afterCoupon * tax / 100;
+  const total = afterCoupon + taxAmt;
+  const saved = discountAmt + couponAmt;
+  return {subtotal, discount: discountAmt, coupon: couponAmt, tax: taxAmt, total, saved,
+          percent: subtotal > 0 ? saved * 100 / subtotal : 0};
+}
+
+function animate(id, to, prefix = "", signed = false){
+  const el = $(id), from = shown[id] || 0, t0 = performance.now(), dur = 600;
+  shown[id] = to;
+  (function step(t){
+    const p = Math.min((t - t0) / dur, 1), e = 1 - Math.pow(1 - p, 3);
+    const v = from + (to - from) * e;
+    el.textContent = (signed ? "−" : "") + fmt(v);
+    if (p < 1) requestAnimationFrame(step);
+  })(t0);
+}
+
+function clamp(v, min, max){ v = parseFloat(v); return isNaN(v) ? 0 : Math.min(Math.max(v, min), max); }
+
+function update(){
+  const price = clamp($("price").value, 0, 1e9);
+  const qty = Math.floor(clamp($("qty").value, 0, 1e6));
+  const r = calculate(price, qty, clamp($("disc").value,0,100), clamp($("coupon").value,0,100), clamp($("tax").value,0,100));
+  animate("r-sub", r.subtotal);
+  animate("r-disc", r.discount, "", true);
+  animate("r-coupon", r.coupon, "", true);
+  animate("r-tax", r.tax);
+  animate("r-total", r.total);
+  $("save").textContent = r.saved > 0 ? `🎉 You save ${fmt(r.saved)} (${r.percent.toFixed(1)}%)` : "";
+  $("bar").style.width = Math.min(r.percent, 100) + "%";
+  const box = $("totalBox"); box.classList.remove("pop"); void box.offsetWidth; box.classList.add("pop");
+}
+
+ids.forEach(i => $(i).addEventListener("input", update));
+$("chips").addEventListener("click", e => {
+  if (e.target.dataset.v){ $("disc").value = e.target.dataset.v; update(); }
+});
+$("reset").addEventListener("click", () => {
+  ids.forEach(i => $(i).value = defaults[i]);
+  update();
+});
+update();
+</script>
+</body>
+</html>
